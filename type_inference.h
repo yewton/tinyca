@@ -31,9 +31,9 @@ int unify(const TC_TypePtr ttp1, const TC_TypePtr ttp2);
 
 /**
  * 型推論を実行する
- * @param EnvPtr env
+ * @param TEnvPtr env
  * @param ProgPtr pp
  * @return TC_TypePtr
  */
-TC_TypePtr typing_prog(EnvPtr env, ProgPtr pp);
+TC_TypePtr typing_prog(TEnvPtr tenv, ProgPtr pp);
 #endif

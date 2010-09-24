@@ -8,8 +8,7 @@ int main(void) {
     printf("\tTiny Small Minimum Caml version 0.0.0\n\n");
     for(;;) {
         printf("# ");
-        dump();
-        printf("\n");
+        eval();
         /* switch(v.t) { */
         /* case INT: */
         /*     printf("- : int = %d\n", v.of.i); */

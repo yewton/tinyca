@@ -93,37 +93,45 @@ ArgsPtr args_alloc(void) {
     ArgsPtr ap = NULL;
     ap = (ArgsPtr)malloc(sizeof(Args));
     memset(ap, 0xc, sizeof(Args));
+    ap->next = NULL;
     return ap;
 }
 
 /**
- * 型環境から変数を探す
- * @param EnvPtr env
- * @param char *var
- * @param ExTypePtr etp
- * @return int 成否
- */
-int find_var(EnvPtr env, const char *var, ExTypePtr etp) {
-    EnvPtr tmp = NULL;
-    int result = 0;
-    for(tmp = env; tmp != NULL; tmp = tmp->next) {
-        if( strncmp(tmp->var, var, strlen(var)) == 0) {
-            switch(tmp->et.t) {
-            case FUNCTION_TYPE:
-                etp->t = FUNCTION_TYPE;
-                etp->of.FunTy.ttp = tmp->et.of.FunTy.ttp;
-                etp->of.FunTy.tp = tmp->et.of.FunTy.tp;
-                break;
-            case SIMPLE_TYPE:
-                etp->t = SIMPLE_TYPE;
-                etp->of.SimpleTy.ttp = tmp->et.of.SimpleTy.ttp;
-                break;
-            }
-            result = 1;
-            break;
-        }
-    }
-    return result;
+ * 変数の型環境の領域を確保して初期化する
+ * @return EnvPtr 確保した領域へのポインタ
+ */  
+EnvPtr env_alloc(void) {
+    EnvPtr ep = NULL;
+    ep = (EnvPtr)malloc(sizeof(Env));
+    memset(ep, 0xc, sizeof(Env));
+    ep->next = NULL;
+    return ep;
+}
+
+/**
+ * 型リストの領域を確保して初期化する
+ * @return TypeListPtr 確保した領域へのポインタ
+ */  
+TypeListPtr tl_alloc(void) {
+    TypeListPtr tlp = NULL;
+    tlp = (TypeListPtr)malloc(sizeof(TypeList));
+    memset(tlp, 0xc, sizeof(TypeList));
+    tlp->next = NULL;
+    return tlp;
+}
+
+/**
+ * 関数の型環境の領域を確保して初期化する
+ * @return FEnvPtr 確保した領域へのポインタ
+ */  
+FEnvPtr fenv_alloc(void) {
+    FEnvPtr fep = NULL;
+    fep = (FEnvPtr)malloc(sizeof(FEnv));
+    memset(fep, 0xc, sizeof(TypeList));
+    fep->t.aty = tl_alloc();
+    fep->next = NULL;
+    return fep;
 }
 
 /**

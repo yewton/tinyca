@@ -140,39 +140,27 @@ int eval_prog(TC_Value *result, ProgPtr pp, EnvPtr env) {
 int eval(TC_Value *v) {
     ProgPtr pp = NULL;
     EnvPtr env = NULL;
-    int is_success = 1;
+    TC_TypePtr ttp = NULL;
+    EnvPtr ep = NULL;
+    FEnvPtr fep = NULL;
 
-    pp = prog_alloc();
     /* 構文解析を実行 */
-    if(0 == parse_prog(pp)) {
-#ifdef _DEBUG
-        printf("cleaning program");
-#endif
-        /* clean_exp(ep); */
-#ifdef _DEBUG
-        printf("\ndone.\n");
-#endif
-        return 0;
-    }
-
-    /* 空の環境を用意 */
+    pp = prog_alloc();
+    if(0 == parse_prog(pp)) return;
     env = env_alloc();
-    if(0 == eval_prog(v, pp, env)) {
-        is_success = 0;
+    if( NULL != (ttp = typing_prog(env, pp)) ) {
+        printf("- : ");
+        /* float 以外は（Unknown 型であろうと）int と見なす */
+        (FLOAT_TYPE == norm(ttp)->t) ? printf("float") : printf("int");
+        printf(" = ");
+    } else {
+        printf("typing error.");
     }
-#ifdef _DEBUG
-    printf("cleaning expression");
-#endif
-    /* clean_exp(ep); */
-#ifdef _DEBUG
-    printf("\ndone.\n");
-#endif
-#ifdef _DEBUG
-    printf("cleaning environment");
-#endif
-    //clean_env(env);
-#ifdef _DEBUG
-    printf("\ndone.\n");
-#endif
+    ep = env_alloc();
+    fep = fenv_alloc();
+    eval_prog(v);
+    printf("\n");
+    
+
     return is_success;
 }

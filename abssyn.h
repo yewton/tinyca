@@ -27,7 +27,7 @@ typedef struct _TypedVar {
     TC_TypePtr ttp;
 } TypedVar;
 
-/* 型リスト */
+/* 型ポインタリスト */
 typedef struct _Types {
     TC_TypePtr ttp;
     struct _Types *next;
@@ -54,11 +54,11 @@ typedef struct _ExType {
 } ExType, *ExTypePtr;
 
 /* 型環境 */
-typedef struct _Env {
+typedef struct _TEnv {
     char var[MAX_VAR_NAME_LENGTH];
     ExType et;
-    struct _Env *next;
-} Env, *EnvPtr;
+    struct _TEnv *next;
+} TEnv, *TEnvPtr;
 
 /* 演算子型 */
 typedef enum {
@@ -152,6 +152,29 @@ typedef struct _Prog {
     } of;
 } Prog, *ProgPtr;
 
+/* 変数の型環境 */
+typedef struct _Env {
+    char var[MAX_VAR_NAME_LENGTH];
+    TyType tt;
+    struct _Env *next;
+} Env, *EnvPtr;
+
+/* 型リスト */
+typedef struct _TypeList {
+    TyType tt;
+    struct _TypeList *next;
+} TypeList, *TypeListPtr;
+
+/* 関数の型環境 */
+typedef struct _FEnv {
+    char var[MAX_VAR_NAME_LENGTH];
+    struct {
+        TyType fty;
+        TypeListPtr aty;
+    } t;
+    struct _FEnv *next;
+} FEnv, *FEnvPtr;
+
 /* 式 */
 ExpPtr exp_alloc(void);
 void clean_exp(ExpPtr);
@@ -161,9 +184,15 @@ ExpsPtr exps_alloc(void);
 ArgsPtr args_alloc(void);
 /* 型リスト */
 TypesPtr types_alloc(void);
-/* 型環境 */
+/* 変数の型環境 */
 EnvPtr env_alloc(void);
-int find_var(EnvPtr, const char *, ExTypePtr);
+int find_var(EnvPtr, const char*);
+/* 関数の方環境 */
+FEnvPtr tenv_alloc(void);
+int find_var_f(FEnvPtr, const char*);
+/* 型環境 */
+TEnvPtr tenv_alloc(void);
+int find_var_t(TEnvPtr, const char *, ExTypePtr);
 /* ブール式 */
 BexpPtr bexp_alloc(void);
 void clean_bexp(BexpPtr);

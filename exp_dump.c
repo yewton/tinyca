@@ -111,15 +111,15 @@ void dump_p(ProgPtr pp) {
  */
 void dump(void) {
     ProgPtr pp = NULL;
-    EnvPtr env = NULL;
+    TEnvPtr tenv = NULL;
     TC_TypePtr ttp = NULL;
     pp = prog_alloc();
     if(0 == parse_prog(pp)) return;
-    env = env_alloc();
-    if( NULL != (ttp = typing_prog(env, pp)) ) {
+    tenv = tenv_alloc();
+    if( NULL != (ttp = typing_prog(tenv, pp)) ) {
         printf("- : ");
         /* float 以外は（Unknown 型であろうと）int と見なす */
-        (FLOAT_TYPE == ttp->t) ? printf("float") : printf("int");
+        (FLOAT_TYPE == norm(ttp)->t) ? printf("float") : printf("int");
         printf(" = \n");
         dump_p(pp);
     } else {

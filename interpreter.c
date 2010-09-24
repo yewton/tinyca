@@ -170,7 +170,7 @@ int eval(TC_Value *v) {
 #ifdef _DEBUG
     printf("cleaning environment");
 #endif
-    clean_env(env);
+    //clean_env(env);
 #ifdef _DEBUG
     printf("\ndone.\n");
 #endif

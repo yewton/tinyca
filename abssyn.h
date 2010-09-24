@@ -70,6 +70,12 @@ typedef enum {
     FMUL_OP
 } OpType;
 
+/* プログラム型 */
+typedef enum {
+    EXP,
+    LETREC
+} ProgType;
+
 /* 式型 */
 typedef enum {
     VAR_EXP,
@@ -80,17 +86,6 @@ typedef enum {
     IF_EXP,
     APP_EXP /* 関数適用 */
 } ExpType;
-
-/* ブール式型 */
-typedef enum {
-    EQ_BEXP
-} BexpType;
-
-/* プログラム型 */
-typedef enum {
-    EXP,
-    LETREC
-} ProgType;
 
 /* 式リスト */
 typedef struct _Exps {
@@ -124,6 +119,11 @@ typedef struct _Exp {
     } of;
     struct _Exp *next;
 } Exp, *ExpPtr;
+
+/* ブール式型 */
+typedef enum {
+    EQ_BEXP
+} BexpType;
 
 /* ブール式の構造定義 */
 typedef struct _Bexp {

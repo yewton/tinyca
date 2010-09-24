@@ -5,6 +5,8 @@
 #include "tinycaml.h"
 #include "abssyn.h"
 
+int typing_bexp(EnvPtr env, BexpPtr bp);
+
 /* 型変数の ID */
 static int current_id = 0;
 
@@ -94,6 +96,7 @@ int unify(const TC_TypePtr ttp1, const TC_TypePtr ttp2) {
     }
     if( (INT_TYPE == tt1->t) && (INT_TYPE == tt2->t) ) return 1;
     if( (FLOAT_TYPE == tt1->t) && (FLOAT_TYPE == tt2->t) ) return 1;
+    printf("unify error.\n");
     return 0;
 }
 
@@ -138,15 +141,17 @@ TC_TypePtr typing(EnvPtr env, ExpPtr ep) {
     TC_TypePtr ttp = NULL;
     TC_TypePtr ttp1 = NULL, ttp2 = NULL;
     TC_TypePtr result = NULL;
+    ExpsPtr args = NULL;
+    TypesPtr tp = NULL;
 
     etp = ex_type_alloc();
     switch(ep->t) {
     case VAR_EXP:
         if(1 == find_var(env, ep->of.var, etp)) {
             if(SIMPLE_TYPE == etp->t) {
-                return etp->of.SimpleTy.ttp;
+                return norm(etp->of.SimpleTy.ttp);
             } else {
-                printf("typing error\n");
+                printf("'%s' is used as variable.\n", ep->of.var);
                 return NULL;
             }
         } else {
@@ -181,8 +186,8 @@ TC_TypePtr typing(EnvPtr env, ExpPtr ep) {
             ttp->t = FLOAT_TYPE;
             break;
         }
-        ttp1 = typing(env, ep->of.Prim.exp1);
-        ttp2 = typing(env, ep->of.Prim.exp2);
+        if( NULL == (ttp1 = typing(env, ep->of.Prim.exp1)) ) return NULL;
+        if( NULL == (ttp2 = typing(env, ep->of.Prim.exp2)) ) return NULL;
         if(0 == unify(ttp, ttp1)) return NULL;
         if(0 == unify(ttp1, ttp2)) return NULL;
         result = ttp;
@@ -200,11 +205,64 @@ TC_TypePtr typing(EnvPtr env, ExpPtr ep) {
         /* 新たな環境のもとで in 式を評価 */
         if(NULL == (result = typing(env1, ep->of.Let.exp2))) return NULL;
         break;
+    case IF_EXP:
+        if( NULL == (ttp1 = typing(env, ep->of.If.exp1)) ) return NULL;
+        if( NULL == (ttp2 = typing(env, ep->of.If.exp2)) ) return NULL;
+        if( 0 == typing_bexp(env, ep->of.If.bp) ) return NULL;
+        if( 0 == unify(ttp1, ttp2) ) return NULL;
+        result = ttp1;
+        break;
+    case APP_EXP:
+        /* 関数の型 */
+        if(1 == find_var(env, ep->of.App.var, etp)) {
+            if(FUNCTION_TYPE == etp->t) {
+                result = norm(etp->of.FunTy.ttp);
+            } else {
+                printf("'%s' is used as function.\n", ep->of.App.var);
+                return NULL;
+            }
+        } else {
+            printf("Undefined variable '%s'.\n", ep->of.App.var);
+            return NULL;
+        }
+        /* 引数の型 */
+        for(tp = etp->of.FunTy.tp, args = ep->of.App.exps;
+            (args != NULL) && (tp != NULL); args = args->next, tp = tp->next) {
+            if( NULL == (ttp = typing(env, args->elm)) ) return NULL;
+            if( 0 == unify(ttp, tp->ttp) ) return NULL;
+        }
+        /* 引数の数が合わない */
+        if( (args != NULL) || (tp != NULL) ) {
+            printf("argument number mismatch.\n");
+            return NULL;
+        }
+        break;
     default:
         return NULL;
         break;
     }
-    return NULL;
+    return result;
+}
+
+/**
+ * ブール式を型付けする
+ * @param EnvPtr env
+ * @param BexpPtr bp
+ * @return int 成否
+ */
+int typing_bexp(EnvPtr env, BexpPtr bp) {
+    TC_TypePtr ttp1 = NULL, ttp2 = NULL;
+    switch(bp->t) {
+    case EQ_BEXP:
+        if( NULL == (ttp1 = typing(env, bp->exp1)) ) return 0;
+        if( NULL == (ttp2 = typing(env, bp->exp2)) ) return 0;
+        if( 0 == unify(ttp1, ttp2) ) return 0;
+        if( 0 == unify(bp->ttp, ttp1) ) return 0;
+        return 1;
+        break;
+    default:
+        return 0;
+    }
 }
         
 TC_TypePtr typing_prog(EnvPtr env, ProgPtr pp) {
@@ -228,10 +286,13 @@ TC_TypePtr typing_prog(EnvPtr env, ProgPtr pp) {
         env->et.of.FunTy.tp = types_alloc();
         for(tp = env->et.of.FunTy.tp, ap = pp->of.LetRec.args; ap != NULL; ap = ap->next, tp = tp->next) {
             tp->ttp = ap->tvar.ttp;
-            tp->next = types_alloc();
+            if( NULL != ap->next ) {
+                /* まだ引数があれば領域確保 */
+                tp->next = types_alloc();
+            } else {
+                tp->next = NULL;
+            }
         }
-        free(tp->next);
-        tp->next = NULL;
         /* 元の先頭要素を追加する要素の次につなぎ直す */
         env->next = tmp;
         /* let rec 式内のローカル環境を定義 */
@@ -256,4 +317,3 @@ TC_TypePtr typing_prog(EnvPtr env, ProgPtr pp) {
     }
     return result;
 }
-

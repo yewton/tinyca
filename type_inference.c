@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tinycaml.h"
 #include "abssyn.h"
 
 int typing_bexp(TEnvPtr tenv, BexpPtr bp);
@@ -54,7 +53,7 @@ int find_var_t(TEnvPtr tenv, const char *var, ExTypePtr etp) {
     TEnvPtr tmp = NULL;
     int result = 0;
     for(tmp = tenv; tmp != NULL; tmp = tmp->next) {
-        if( strncmp(tmp->var, var, strlen(var)) == 0) {
+        if( strcmp(tmp->var, var) == 0) {
             switch(tmp->et.t) {
             case FUNCTION_TYPE:
                 etp->t = FUNCTION_TYPE;
@@ -316,12 +315,7 @@ TC_TypePtr typing_prog(TEnvPtr tenv, ProgPtr pp) {
         tenv->et.of.FunTy.tp = types_alloc();
         for(tp = tenv->et.of.FunTy.tp, ap = pp->of.LetRec.args; ap != NULL; ap = ap->next, tp = tp->next) {
             tp->ttp = ap->tvar.ttp;
-            if( NULL != ap->next ) {
-                /* まだ引数があれば領域確保 */
-                tp->next = types_alloc();
-            } else {
-                tp->next = NULL;
-            }
+            tp->next = (NULL != ap->next) ? types_alloc() : NULL;
         }
         /* 元の先頭要素を追加する要素の次につなぎ直す */
         tenv->next = tmp;
@@ -331,13 +325,13 @@ TC_TypePtr typing_prog(TEnvPtr tenv, ProgPtr pp) {
             strncpy_s(tmp->var, MAX_VAR_NAME_LENGTH, ap->tvar.var, strlen(ap->tvar.var));
             tmp->et.t = SIMPLE_TYPE;
             tmp->et.of.SimpleTy.ttp = ap->tvar.ttp;
+            tmp->next = (NULL != ap->next) ? tenv_alloc() : NULL;
             if(NULL != ap->next) {
                 tmp->next = tenv_alloc();
             } else {
                 break;
             }
         }
-        /* 再帰関数定義のために、先程確保した型環境(+元の環境)をローカル環境の末尾につなげる */
         tmp->next = tenv;
         if(NULL == (ttp = typing(tenv1, pp->of.LetRec.exp))) {
             result = NULL;

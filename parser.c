@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include "token.h"
 #include "abssyn.h"
-#include "tinycaml.h"
 #include "type_inference.h"
 
 int parse_bexp(BexpPtr);
@@ -173,6 +172,7 @@ int parse_T_1(ExpPtr ep) {
     switch(token.t) {
     case TIMES_TOKEN:
         ep->of.Prim.op = MUL_OP;
+        break;
     case FTIMES_TOKEN:
         ep->of.Prim.op = FMUL_OP;
         break;

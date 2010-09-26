@@ -4,7 +4,6 @@
 #include <string.h>
 #include "abssyn.h"
 #include "parser.h"
-#include "tinycaml.h"
 #include "type_inference.h"
 
 /**
@@ -32,23 +31,6 @@ ExpPtr exp_alloc(void) {
 }
 
 /**
- * 式のメモリ開放
- * @param ExpPtr ep 式の先頭へのポインタ
- */
-void clean_exp(ExpPtr ep) {
-    ExpPtr tempi = NULL, tempj = NULL;
-
-    for(tempi = ep; tempi != NULL; tempi = tempj) {
-        tempj = tempi->next;
-        free(tempi);
-#ifdef _DEBUG
-        printf(".");
-#endif
-    }
-    return;
-}
-
-/**
  * ブール式の領域を確保して初期化する
  * @return BexpPtr 確保した領域へのポインタ
  */  
@@ -58,20 +40,6 @@ BexpPtr bexp_alloc(void) {
     memset(bp, 0xc, sizeof(Bexp));
     bp->ttp = tyvar_alloc();
     return bp;
-}
-
-/**
- * ブール式のメモリ開放
- * @param BexpPtr bp ブール式の先頭へのポインタ
- */
-void clean_bexp(BexpPtr bp) {
-    clean_exp(bp->exp1);
-    clean_exp(bp->exp2);
-    free(bp);
-#ifdef _DEBUG
-        printf(".");
-#endif
-    return;
 }
 
 /**
@@ -98,7 +66,7 @@ ArgsPtr args_alloc(void) {
 }
 
 /**
- * 変数の型環境の領域を確保して初期化する
+ * 変数の環境の領域を確保して初期化する
  * @return EnvPtr 確保した領域へのポインタ
  */  
 EnvPtr env_alloc(void) {
@@ -110,47 +78,50 @@ EnvPtr env_alloc(void) {
 }
 
 /**
- * 型リストの領域を確保して初期化する
- * @return TypeListPtr 確保した領域へのポインタ
- */  
-TypeListPtr tl_alloc(void) {
-    TypeListPtr tlp = NULL;
-    tlp = (TypeListPtr)malloc(sizeof(TypeList));
-    memset(tlp, 0xc, sizeof(TypeList));
-    tlp->next = NULL;
-    return tlp;
-}
-
-/**
- * 関数の型環境の領域を確保して初期化する
+ * 関数の環境の領域を確保して初期化する
  * @return FEnvPtr 確保した領域へのポインタ
  */  
 FEnvPtr fenv_alloc(void) {
     FEnvPtr fep = NULL;
     fep = (FEnvPtr)malloc(sizeof(FEnv));
-    memset(fep, 0xc, sizeof(TypeList));
-    fep->t.aty = tl_alloc();
+    memset(fep, 0xc, sizeof(FEnv));
     fep->next = NULL;
     return fep;
 }
 
 /**
- * プログラムのメモリ開放
- * @param ProgPtr pp プログラムの先頭へのポインタ
+ * コンパイラ用変数の型環境の領域を確保して初期化する
+ * @return EnvCPtr 確保した領域へのポインタ
+ */  
+EnvCPtr envc_alloc(void) {
+    EnvCPtr ep = NULL;
+    ep = (EnvCPtr)malloc(sizeof(EnvC));
+    memset(ep, 0xc, sizeof(EnvC));
+    ep->next = NULL;
+    return ep;
+}
+
+/**
+ * 型リストの領域を確保して初期化する
+ * @return TyTypesPtr 確保した領域へのポインタ
+ */  
+TyTypesPtr tytypes_alloc(void) {
+    TyTypesPtr ttsp = NULL;
+    ttsp = (TyTypesPtr)malloc(sizeof(TyTypes));
+    memset(ttsp, 0xc, sizeof(TyTypes));
+    ttsp->next = NULL;
+    return ttsp;
+}
+
+/**
+ * コンパイラ用関数の型環境の領域を確保して初期化する
+ * @return FEnvCPtr 確保した領域へのポインタ
  */
-void clean_prog(ProgPtr pp) {
-    switch(pp->t) {
-    case EXP:
-        clean_exp(pp->of.exp);
-        break;
-    case LETREC:
-        clean_exp(pp->of.LetRec.exp);
-        clean_prog(pp->of.LetRec.prog);
-        break;
-    }
-    free(pp);
-#ifdef _DEBUG
-        printf(".");
-#endif
-    return;
+FEnvCPtr fenvc_alloc(void) {
+    FEnvCPtr fep = NULL;
+    fep = (FEnvCPtr)malloc(sizeof(FEnvC));
+    memset(fep, 0xc, sizeof(FEnvC));
+    fep->t.tys = tytypes_alloc();
+    fep->next = NULL;
+    return fep;
 }

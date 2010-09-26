@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "token.h"
-#include "tinycaml.h"
+#include "input.h"
 
 static Token st_look_ahead_token; /* 先読みトークン */
 static int st_look_ahead_token_exists = 0; /* 先読みトークンの存在フラグ */
@@ -47,11 +47,11 @@ Token next_token(void) {
     int is_keyword = 0;
     char str[MAX_TOKEN_SIZE] = "";
 
-    while((c = getchar()) != EOF) {
+    while( EOF != (c = getc(fp)) ) {
         if ((status == IN_INT_PART_STATUS)
             && !isdigit(c) && c != '.') {
             /* 整数部分 */
-            ungetc(c, stdin);
+            ungetc(c, fp);
             sscanf_s(str, "%d", &token.of.intval, sizeof(str));
             token.t = INT_TOKEN;
             break;
@@ -59,14 +59,14 @@ Token next_token(void) {
         if((status == IN_FRAC_PART_STATUS)
            && !isdigit(c)) {
             /* 小数点数部分 */
-            ungetc(c, stdin);
+            ungetc(c, fp);
             sscanf_s(str, "%f", &token.of.floatval, sizeof(str));
             token.t = FLOAT_TOKEN;
             break;
         }
         if((status == DOT_STATUS) && !isdigit(c)) {
             /* 小数点部分 */
-            ungetc(c, stdin);
+            ungetc(c, fp);
             /* 0 を補って少数として解釈する */
             str[out_pos] = '0';
             ++out_pos;
@@ -78,10 +78,10 @@ Token next_token(void) {
         if ((status == IN_ID_PART_STATUS)
             && !isalpha(c) && !isdigit(c)) {
             /* 識別子部分 */
-            ungetc(c, stdin);
+            ungetc(c, fp);
             for(i = 0; KEYWORDS[i] != NULL && 0 == is_keyword; ++i) {
                 /* キーワードか判定 */
-                if(strncmp(KEYWORDS[i], str, strlen(str)) == 0) {
+                if(strcmp(KEYWORDS[i], str) == 0) {
                     switch(i) {
                     case LET_KEYWORD:
                         token.t = LET_TOKEN;
@@ -115,9 +115,8 @@ Token next_token(void) {
              && !(isalpha(c)) && !isdigit(c) ) {
             /* 特殊命令部分 */
             if(';' == c) {
-                if(';' == (c = getchar())) {
-                    if(strncmp("#quit", str, strlen(str)) == 0) {
-                        PAUSE;
+                if(';' == (c = getc(fp))) {
+                    if( strcmp("#quit", str) == 0) {
                         exit(0);
                     } else {
                         /* それ以外の時に来たらエラー */
@@ -149,31 +148,31 @@ Token next_token(void) {
         ++out_pos;
         str[out_pos] = '\0';
         if ('+' == c ) {
-            if('.' == (c = getchar())) {
+            if('.' == (c = getc(fp))) {
                 token.t = FPLUS_TOKEN;
             } else {
-                ungetc(c, stdin);
+                ungetc(c, fp);
                 token.t = PLUS_TOKEN;
             }
             break;
         } else if ('-' == c ) {
-            if('.' == (c = getchar())) {
+            if('.' == (c = getc(fp))) {
                 token.t = FMINUS_TOKEN;
             } else {
-                ungetc(c, stdin);
+                ungetc(c, fp);
                 token.t = MINUS_TOKEN;
             }
             break;
         } else if ('*' == c) {
-            if('.' == (c = getchar())) {
+            if('.' == (c = getc(fp))) {
                 token.t = FTIMES_TOKEN;
             } else {
-                ungetc(c, stdin);
+                ungetc(c, fp);
                 token.t = TIMES_TOKEN;
             }
             break;
         } else if (';' == c) {
-            if(';' == (c = getchar())) {
+            if(';' == (c = getc(fp))) {
                 token.t = SEMICOLON_TOKEN;
             } else {
                 /* エラー */
@@ -226,7 +225,6 @@ Token next_token(void) {
     }
     if(c == EOF) {
         printf("bye.\n");
-        PAUSE;
         exit(0);
     }
     strncpy_s(token.str, MAX_TOKEN_SIZE, str, strlen(str));
@@ -265,69 +263,3 @@ Token get_token(void) {
 void unget_token(void) {
     st_look_ahead_token_exists = 1;
 }
-
-/*
- * テスト用
- */
-/* int main(void) { */
-/*   Token token; */
-/*   for(;;) { */
-/*     token = get_token(); */
-/*     switch(token.t) { */
-/*     case ID_TOKEN: */
-/*       printf("ID TOKEN: var = %s.\n", token.of.var); */
-/*       break; */
-/*     case INT_TOKEN: */
-/*       printf("INT TOKEN: value = %d.\n", token.of.intval); */
-/*       break; */
-/*     case FLOAT_TOKEN: */
-/*       printf("FLOAT TOKEN: value = %f.\n", token.of.floatval); */
-/*       break; */
-/*     case LPAREN_TOKEN: */
-/*       printf("LPAREN TOKEN.\n"); */
-/*       break; */
-/*     case RPAREN_TOKEN: */
-/*       printf("RPAREN TOKEN.\n"); */
-/*       break; */
-/*     case PLUS_TOKEN: */
-/*       printf("PLUS TOKEN.\n"); */
-/*       break; */
-/*     case FPLUS_TOKEN: */
-/*       printf("FPLUS TOKEN.\n"); */
-/*       break; */
-/*     case TIMES_TOKEN: */
-/*       printf("TIMES TOKEN.\n"); */
-/*       break; */
-/*     case FTIMES_TOKEN: */
-/*       printf("FTIMES TOKEN.\n"); */
-/*       break; */
-/*     case EQ_TOKEN: */
-/*       printf("EQ TOKEN.\n"); */
-/*       break; */
-/*     case LET_TOKEN: */
-/*       printf("LET TOKEN.\n"); */
-/*       break; */
-/*     case IN_TOKEN: */
-/*       printf("IN TOKEN.\n"); */
-/*       break; */
-/*     case REC_TOKEN: */
-/*       printf("REC TOKEN.\n"); */
-/*       break; */
-/*     case IF_TOKEN: */
-/*       printf("IF TOKEN.\n"); */
-/*       break; */
-/*     case THEN_TOKEN: */
-/*       printf("THEN TOKEN.\n"); */
-/*       break; */
-/*     case ELSE_TOKEN: */
-/*       printf("ELSE TOKEN.\n"); */
-/*       break; */
-/*     case COMMA_TOKEN: */
-/*       printf("COMMA TOKEN.\n"); */
-/*       break; */
-/*     case BAD_TOKEN: */
-/*       printf("BAD TOKEN.\n"); */
-/*       break; */
-/*     } */
-/*   } */
-/* } */

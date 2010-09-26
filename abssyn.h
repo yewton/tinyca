@@ -152,28 +152,66 @@ typedef struct _Prog {
     } of;
 } Prog, *ProgPtr;
 
-/* 変数の型環境 */
+/* tinycaml における型 */
+typedef enum {
+    INT,
+    FLOAT
+} PrimType;
+
+/* tinycaml における値 */
+typedef struct _TC_Value {
+    PrimType t;
+    union {
+        int i;
+        float f;
+    } of;
+} TC_Value;
+
+/* 変数の環境 */
 typedef struct _Env {
     char var[MAX_VAR_NAME_LENGTH];
-    TyType tt;
+    TC_Value tv;
     struct _Env *next;
 } Env, *EnvPtr;
 
-/* 型リスト */
-typedef struct _TypeList {
-    TyType tt;
-    struct _TypeList *next;
-} TypeList, *TypeListPtr;
+/* 関数の構造 */
+typedef struct _Func {
+    ArgsPtr args;
+    ExpPtr exp;
+} Func;    
 
-/* 関数の型環境 */
+/* 関数の環境 */
 typedef struct _FEnv {
     char var[MAX_VAR_NAME_LENGTH];
-    struct {
-        TyType fty;
-        TypeListPtr aty;
-    } t;
+    Func f;
     struct _FEnv *next;
 } FEnv, *FEnvPtr;
+
+/* コンパイラ用変数の型環境 */
+typedef struct _EnvC {
+    char var[MAX_VAR_NAME_LENGTH];
+    TyType t;
+    struct _EnvC *next;
+} EnvC, *EnvCPtr;
+
+/* 型リスト */
+typedef struct _TyTypes {
+    TyType t;
+    struct _TyTypes *next;
+} TyTypes, *TyTypesPtr;
+
+/* 関数の型構造 */
+typedef struct _FuncT {
+    TyType fty;
+    TyTypesPtr tys;
+} FuncT;
+
+/* コンパイラ用関数の型環境 */
+typedef struct _FEnvC {
+    char var[MAX_VAR_NAME_LENGTH];
+    FuncT t;
+    struct _FEnvC *next;
+} FEnvC, *FEnvCPtr;
 
 /* 式 */
 ExpPtr exp_alloc(void);
@@ -184,22 +222,30 @@ ExpsPtr exps_alloc(void);
 ArgsPtr args_alloc(void);
 /* 型リスト */
 TypesPtr types_alloc(void);
-/* 変数の型環境 */
+/* 変数の環境 */
 EnvPtr env_alloc(void);
 int find_var(EnvPtr, const char*);
-/* 関数の方環境 */
-FEnvPtr tenv_alloc(void);
+/* 関数の環境 */
+FEnvPtr fenv_alloc(void);
 int find_var_f(FEnvPtr, const char*);
 /* 型環境 */
 TEnvPtr tenv_alloc(void);
 int find_var_t(TEnvPtr, const char *, ExTypePtr);
+
+/* 変数の型環境 */
+EnvCPtr envc_alloc(void);
+/* 変数の型環境 */
+TyTypesPtr tytypes_alloc(void);
+/* 関数の環境 */
+FEnvCPtr fenvc_alloc(void);
+
 /* ブール式 */
 BexpPtr bexp_alloc(void);
-void clean_bexp(BexpPtr);
 /* プログラム */
 ProgPtr prog_alloc(void);
-void clean_prog(ProgPtr);
 
 int parse_prog(ProgPtr);
+int eval(TC_Value *);
+int compile(char *);
 
 #endif
